@@ -1,0 +1,120 @@
+.notifications-page {
+  padding: 2rem;
+}
+
+.notifications-page__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.notifications-page__header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #2c3e50;
+}
+
+.notifications-page__back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6c757d;
+}
+
+.notifications-page__back:hover {
+  background: #f8f9fa;
+  color: #2c3e50;
+  transform: translateX(-2px);
+}
+
+.notifications-page__content {
+  background: white;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.notifications-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #6c757d;
+}
+
+.notifications-page__empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.notifications-page__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notifications-page__item {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.notifications-page__item:last-child {
+  border-bottom: none;
+}
+
+.notifications-page__item--unread {
+  background-color: #f0f7ff;
+}
+
+.notifications-page__item:hover {
+  background-color: #f8f9fa;
+}
+
+.notifications-page__item-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.notifications-page__item-text {
+  margin: 0;
+  color: #2c3e50;
+  flex: 1;
+}
+
+.notifications-page__item-time {
+  color: #6c757d;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.notifications__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #6c757d;
+}
+
+@media (max-width: 768px) {
+  .notifications-page {
+    padding: 1rem;
+  }
+
+  .notifications-page__header {
+    margin-bottom: 1rem;
+  }
+
+  .notifications-page__header h1 {
+    font-size: 1.5rem;
+  }
+} 

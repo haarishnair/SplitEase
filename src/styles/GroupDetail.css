@@ -1,0 +1,175 @@
+.group-detail {
+  padding: 0 2rem 2rem;
+  margin-top: -2rem;
+  min-height: calc(100vh - 3.5rem);
+  background-color: #f8f9fa;
+}
+
+.group-detail__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+}
+
+.group-detail__back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.2rem;
+  border: none;
+  background: white;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  color: #2c3e50;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.group-detail__back:hover {
+  background: #f0f4f8;
+  transform: translateX(-0.2rem);
+}
+
+.group-detail__add-expense {
+  padding: 0.8rem 1.5rem;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.group-detail__add-expense:hover {
+  background-color: #1557b0;
+  transform: translateY(-0.2rem);
+  box-shadow: 0 0.25rem 0.75rem rgba(26, 115, 232, 0.3);
+}
+
+.group-detail__content {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+}
+
+.group-detail__info {
+  background: white;
+  border-radius: 1.2rem;
+  padding: 2rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.group-detail__title {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin: 0 0 1rem;
+}
+
+.group-detail__description {
+  color: #6c757d;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.group-detail__stats {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.group-detail__stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2c3e50;
+}
+
+.group-detail__expenses {
+  background: white;
+  border-radius: 1.2rem;
+  padding: 2rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.group-detail__expenses h2 {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin: 0 0 1.5rem;
+}
+
+.group-detail__empty {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+  background: #f8f9fa;
+  border-radius: 0.8rem;
+}
+
+.group-detail__expenses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.group-detail__expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem;
+  background: #f8f9fa;
+  border-radius: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.group-detail__expense-item:hover {
+  background: #f0f4f8;
+  transform: translateX(0.2rem);
+}
+
+.group-detail__expense-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #2c3e50;
+}
+
+.group-detail__expense-info p {
+  margin: 0.3rem 0 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.group-detail__expense-amount {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+@media (max-width: 64rem) {
+  .group-detail__content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 48rem) {
+  .group-detail {
+    padding: 1.5rem;
+  }
+
+  .group-detail__header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .group-detail__back,
+  .group-detail__add-expense {
+    width: 100%;
+    justify-content: center;
+  }
+} 

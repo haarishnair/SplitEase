@@ -1,0 +1,127 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  padding-top: 3.5rem; /* Height of top navigation */
+}
+
+.dashboard__sidebar {
+  position: fixed;
+  left: 0;
+  top: 3.5rem; /* Height of top navigation */
+  bottom: 0;
+  width: 240px;
+  background-color: white;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+}
+
+.dashboard__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dashboard__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  color: #6c757d;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.dashboard__nav-item:hover {
+  background-color: #f8f9fa;
+  color: #2c3e50;
+}
+
+.dashboard__nav-item--active {
+  color: #1a73e8;
+  background-color: #e8f0fe;
+}
+
+.dashboard__nav-icon {
+  font-size: 1.5rem;
+}
+
+.dashboard__signout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  margin: 1rem;
+  color: #ef4444;
+  background: #fee2e2;
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 500;
+  width: calc(100% - 2rem);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+}
+
+.dashboard__signout:hover {
+  background: #fecaca;
+  color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+}
+
+.dashboard__signout .dashboard__nav-icon {
+  font-size: 1.3rem;
+  transition: transform 0.3s ease;
+  color: #ef4444; /* Make icon red */
+}
+
+.dashboard__signout:hover .dashboard__nav-icon {
+  transform: translateX(3px);
+  color: #dc2626; /* Darker red on hover */
+}
+
+/* Override any other styles that might affect the icon color */
+.dashboard__nav-item.dashboard__signout .dashboard__nav-icon {
+  color: #ef4444 !important;
+}
+
+.dashboard__nav-item.dashboard__signout:hover .dashboard__nav-icon {
+  color: #dc2626 !important;
+}
+
+.dashboard-layout__main {
+  flex: 1;
+  margin-left: 240px; /* Width of sidebar */
+  padding: 2rem;
+  background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  .dashboard__sidebar {
+    width: 64px;
+  }
+
+  .dashboard__nav-item span {
+    display: none;
+  }
+
+  .dashboard__nav-item {
+    padding: 0.75rem;
+    justify-content: center;
+  }
+
+  .dashboard-layout__main {
+    margin-left: 64px;
+    padding: 1rem;
+  }
+} 
