@@ -1,0 +1,132 @@
+.navigation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5rem;
+  background: white;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.5rem;
+}
+
+.navigation__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #1a73e8;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.navigation__icon {
+  width: 2em;
+  height: 2em;
+}
+
+.navigation__title {
+  color: #2c3e50;
+}
+
+.navigation__actions {
+  display: flex;
+  align-items: center;
+}
+
+.navigation__links {
+  display: flex;
+  height: 100%;
+}
+
+.navigation__link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.5rem;
+  color: #6c757d;
+  text-decoration: none;
+  height: 100%;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.navigation__link svg {
+  font-size: 1.3rem;
+}
+
+.navigation__link:hover {
+  color: #2c3e50;
+  background: #f8f9fa;
+}
+
+.navigation__link.active {
+  color: #1a73e8;
+  border-bottom-color: #1a73e8;
+}
+
+.navigation__actions {
+  padding-right: 1.5rem;
+}
+
+.navigation__signout {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.2rem;
+  background: white;
+  border: none;
+  border-radius: 0.8rem;
+  color: #ef4444;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.navigation__signout:hover {
+  background: #fee2e2;
+  transform: translateY(-0.2rem);
+  box-shadow: 0 0.5rem 1.5rem rgba(239, 68, 68, 0.2);
+}
+
+.navigation__signout svg {
+  font-size: 1.2rem;
+}
+
+@media (max-width: 48rem) {
+  .navigation {
+    padding: 0 1rem;
+  }
+
+  .navigation__title {
+    font-size: 1.1rem;
+  }
+
+  .navigation__link {
+    padding: 0 1.2rem;
+  }
+
+  .navigation__link span {
+    display: none;
+  }
+
+  .navigation__actions {
+    padding-right: 1rem;
+  }
+
+  .navigation__signout {
+    left: 1rem;
+    bottom: 1rem;
+  }
+
+  .navigation__signout span {
+    display: none;
+  }
+} 

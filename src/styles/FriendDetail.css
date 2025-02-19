@@ -1,0 +1,145 @@
+.friend-detail {
+  padding: 2rem;
+  background-color: #f8f9fa;
+}
+
+.friend-detail__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.friend-detail__back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.2rem;
+  background: white;
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  color: #2c3e50;
+  transition: all 0.2s ease;
+}
+
+.friend-detail__back:hover {
+  background: #f0f4f8;
+  transform: translateX(-0.2rem);
+}
+
+.friend-detail__settle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.friend-detail__settle:hover {
+  background: #1557b0;
+  transform: translateY(-0.2rem);
+}
+
+.friend-detail__content {
+  display: grid;
+  gap: 2rem;
+}
+
+.friend-detail__info {
+  background: white;
+  padding: 2rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.friend-detail__info h1 {
+  margin: 0 0 1rem;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.friend-detail__balance {
+  font-size: 1.2rem;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: #f8f9fa;
+  text-align: center;
+}
+
+.friend-detail__balance.positive {
+  color: #22c55e;
+  background: #dcfce7;
+}
+
+.friend-detail__balance.negative {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.friend-detail__history {
+  background: white;
+  padding: 2rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.friend-detail__history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.friend-detail__history-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.friend-detail__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #6c757d;
+}
+
+.friend-detail__error {
+  padding: 1rem;
+  background: #fee2e2;
+  color: #ef4444;
+  border-radius: 0.8rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .friend-detail {
+    padding: 1rem;
+  }
+
+  .friend-detail__header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .friend-detail__back,
+  .friend-detail__settle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .friend-detail__info,
+  .friend-detail__history {
+    padding: 1.5rem;
+  }
+
+  .friend-detail__info h1 {
+    font-size: 1.5rem;
+  }
+} 

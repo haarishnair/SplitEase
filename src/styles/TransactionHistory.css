@@ -1,0 +1,132 @@
+.transaction-history {
+  background: white;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.transaction-history__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.transaction-history__item {
+  display: flex;
+  align-items: center;
+  padding: 1.2rem;
+  border-bottom: 1px solid #f0f4f8;
+  transition: background-color 0.2s ease;
+}
+
+.transaction-history__item:last-child {
+  border-bottom: none;
+}
+
+.transaction-history__item:hover {
+  background-color: #f8f9fa;
+}
+
+.transaction-history__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  margin-right: 1rem;
+  background: #f0f4f8;
+}
+
+.transaction-history__icon svg {
+  font-size: 1.2rem;
+}
+
+.transaction-history__icon .settlement {
+  color: #6366f1;
+}
+
+.transaction-history__icon .incoming {
+  color: #22c55e;
+}
+
+.transaction-history__icon .outgoing {
+  color: #ef4444;
+}
+
+.transaction-history__details {
+  flex: 1;
+}
+
+.transaction-history__main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.transaction-history__type {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.transaction-history__amount {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.transaction-history__amount.incoming {
+  color: #22c55e;
+}
+
+.transaction-history__amount.outgoing {
+  color: #ef4444;
+}
+
+.transaction-history__sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.transaction-history__note {
+  font-style: italic;
+}
+
+.transaction-history__date {
+  font-size: 0.85rem;
+}
+
+.transaction-history__empty {
+  padding: 3rem;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.transaction-history__loading {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.transaction-history__error {
+  padding: 1.5rem;
+  text-align: center;
+  color: #ef4444;
+  background: #fee2e2;
+  border-radius: 0.8rem;
+  margin: 1rem;
+}
+
+@media (max-width: 48rem) {
+  .transaction-history__main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .transaction-history__amount {
+    font-size: 1rem;
+  }
+} 
