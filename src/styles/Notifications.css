@@ -1,5 +1,163 @@
 .notifications {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notifications__icon-wrapper {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.notifications__icon-wrapper:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.notifications__icon-wrapper:hover .notifications__icon {
+  color: #3b82f6;
+}
+
+.notifications__icon {
+  font-size: 1.75rem;
+  color: #64748b;
+  transition: color 0.2s ease;
+}
+
+.notifications__badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #ff4444;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.notifications__dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 320px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 1000;
+}
+
+.notifications__header {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notifications__header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.notifications__list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.notification__item {
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.notification__item:last-child {
+  margin-bottom: 0;
+}
+
+.notification__content {
+  padding: 1rem;
+}
+
+.notification__text {
+  margin: 0 0 0.75rem 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.notification__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.notification__accept,
+.notification__reject {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.notification__accept {
+  background: #34d399;
+  color: white;
+}
+
+.notification__accept:hover {
+  background: #059669;
+}
+
+.notification__reject {
+  background: #f87171;
+  color: white;
+}
+
+.notification__reject:hover {
+  background: #dc2626;
+}
+
+.notifications__empty {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.notifications__loading {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+}
+
+/* Add click outside handling */
+.notifications__dropdown::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
 }
 
 .notifications__toggle {
@@ -17,18 +175,6 @@
 .notifications__toggle:hover {
   background: #f0f4f8;
   transform: scale(1.1);
-}
-
-.notifications__badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: #ef4444;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.2rem 0.4rem;
-  border-radius: 1rem;
-  min-width: 1.2rem;
 }
 
 .notifications__panel {
@@ -57,20 +203,6 @@
   }
 }
 
-.notifications__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.2rem;
-  border-bottom: 1px solid #f0f4f8;
-}
-
-.notifications__header h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #2c3e50;
-}
-
 .notifications__mark-all {
   background: none;
   border: none;
@@ -93,17 +225,16 @@
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
 }
 
 .notifications__close:hover {
   background: #f0f4f8;
+  color: #ef4444;
   transform: rotate(90deg);
-}
-
-.notifications__list {
-  max-height: 24rem;
-  overflow-y: auto;
 }
 
 .notifications__item {
@@ -138,13 +269,6 @@
 .notifications__time {
   font-size: 0.85rem;
   color: #6c757d;
-}
-
-.notifications__empty {
-  padding: 3rem 2rem;
-  text-align: center;
-  color: #6c757d;
-  font-style: italic;
 }
 
 @media (max-width: 48rem) {

@@ -1,127 +1,154 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
+import React, { useState, useEffect, useRef } from 'react';
+import { db, auth } from '../firebase';
 import { 
-  getFirestore, 
   collection, 
   query, 
   where, 
-  orderBy, 
   onSnapshot,
+  doc,
   updateDoc,
-  doc 
+  deleteDoc,
+  addDoc
 } from 'firebase/firestore';
 import { MdNotifications, MdClose } from 'react-icons/md';
-import { format } from 'date-fns';
 import '../styles/Notifications.css';
 
 function Notifications() {
   const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const auth = getAuth();
-  const db = getFirestore();
-  const user = auth.currentUser;
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const notificationRef = useRef(null);
 
   useEffect(() => {
-    if (!user) return;
+    const user = auth.currentUser;
+    
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-    const q = query(
+    const notificationsQuery = query(
       collection(db, 'notifications'),
-      where('userId', '==', user.uid),
-      orderBy('timestamp', 'desc')
+      where('toUserId', '==', user.uid),
+      where('status', '==', 'pending')
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notificationsData = snapshot.docs.map(doc => ({
+    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+      const newNotifications = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate()
+        ...doc.data()
       }));
-      
-      setNotifications(notificationsData);
-      setUnreadCount(notificationsData.filter(n => !n.read).length);
+      setNotifications(newNotifications);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, db]);
+  }, []);
 
-  const markAsRead = async (notificationId) => {
+  const handleNotificationClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleClose = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDropdown(false);
+  };
+
+  const handleNotificationItemClick = (e) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+  };
+
+  const handleAccept = async (notification) => {
     try {
-      const notificationRef = doc(db, 'notifications', notificationId);
+      const notificationRef = doc(db, 'notifications', notification.id);
+      
+      if (notification.type === 'friendRequest') {
+        const friendsRef = collection(db, 'friends');
+        await addDoc(friendsRef, {
+          users: [auth.currentUser.uid, notification.fromUserId],
+          createdAt: new Date()
+        });
+      }
+      
       await updateDoc(notificationRef, {
-        read: true
+        status: 'accepted'
       });
-    } catch (err) {
-      console.error('Error marking notification as read:', err);
+    } catch (error) {
+      console.error('Error accepting notification:', error);
     }
   };
 
-  const markAllAsRead = async () => {
+  const handleReject = async (notificationId) => {
     try {
-      const promises = notifications
-        .filter(n => !n.read)
-        .map(n => markAsRead(n.id));
-      await Promise.all(promises);
-    } catch (err) {
-      console.error('Error marking all notifications as read:', err);
+      const notificationRef = doc(db, 'notifications', notificationId);
+      await deleteDoc(notificationRef);
+    } catch (error) {
+      console.error('Error rejecting notification:', error);
     }
   };
 
   return (
-    <div className="notifications">
-      <button 
-        className="notifications__toggle"
-        onClick={() => setShowNotifications(!showNotifications)}
+    <div className="notifications" ref={notificationRef}>
+      <div 
+        className="notifications__icon-wrapper"
+        onClick={handleNotificationClick}
       >
-        <MdNotifications />
-        {unreadCount > 0 && (
-          <span className="notifications__badge">{unreadCount}</span>
+        <MdNotifications className="notifications__icon" />
+        {notifications.length > 0 && (
+          <span className="notification-badge"></span>
         )}
-      </button>
+      </div>
 
-      {showNotifications && (
-        <div className="notifications__panel">
+      {showDropdown && (
+        <div className="notifications__dropdown" onClick={handleNotificationItemClick}>
           <div className="notifications__header">
             <h3>Notifications</h3>
-            {unreadCount > 0 && (
-              <button 
-                className="notifications__mark-all"
-                onClick={markAllAsRead}
-              >
-                Mark all as read
-              </button>
-            )}
             <button 
               className="notifications__close"
-              onClick={() => setShowNotifications(false)}
+              onClick={handleClose}
             >
               <MdClose />
             </button>
           </div>
-
-          <div className="notifications__list">
-            {notifications.length === 0 ? (
-              <div className="notifications__empty">
-                No notifications
-              </div>
-            ) : (
-              notifications.map(notification => (
-                <div 
-                  key={notification.id}
-                  className={`notifications__item ${!notification.read ? 'unread' : ''}`}
-                  onClick={() => markAsRead(notification.id)}
-                >
-                  <div className="notifications__content">
-                    <p>{notification.message}</p>
-                    <span className="notifications__time">
-                      {format(notification.timestamp, 'MMM d, h:mm a')}
-                    </span>
+          {loading ? (
+            <div className="notifications__loading">Loading...</div>
+          ) : notifications.length > 0 ? (
+            <div className="notifications__list">
+              {notifications.map(notification => (
+                <div key={notification.id} className="notification__item">
+                  <div className="notification__content">
+                    <p className="notification__text">
+                      {notification.type === 'friendRequest' 
+                        ? `${notification.fromUserEmail} sent you a friend request`
+                        : `${notification.fromUserEmail} invited you to join ${notification.groupName}`
+                      }
+                    </p>
+                    <div className="notification__actions">
+                      <button 
+                        onClick={() => handleAccept(notification)}
+                        className="notification__accept"
+                      >
+                        Accept
+                      </button>
+                      <button 
+                        onClick={() => handleReject(notification.id)}
+                        className="notification__reject"
+                      >
+                        Reject
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="notifications__empty">
+              No new notifications
+            </div>
+          )}
         </div>
       )}
     </div>
