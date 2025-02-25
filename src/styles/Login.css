@@ -6,7 +6,6 @@
   margin: 0;
   background-color: #f8f9fa;
   position: fixed;
-  top: 3.5em;
   left: 0;
   right: 0;
   bottom: 0;
@@ -136,6 +135,15 @@
   height: 1em;
   accent-color: #1a73e8;
   cursor: pointer;
+}
+
+.login__error {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 @media (max-width: 768px) {

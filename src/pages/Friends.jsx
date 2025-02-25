@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -8,30 +9,28 @@ import {
   onSnapshot,
   doc,
   updateDoc,
-  arrayUnion,
-  arrayRemove,
   addDoc,
-  getDocs
+  getDocs,
+  deleteDoc,
+  setDoc,
+  orderBy,
+  startAt,
+  endAt,
+  getDoc
 } from 'firebase/firestore';
-import { 
-  MdPersonAdd, 
-  MdCheck, 
-  MdClose, 
-  MdSearch,
-  MdArrowUpward,
-  MdArrowDownward
-} from 'react-icons/md';
+import { MdDashboard, MdGroups, MdPeopleAlt, MdSearch, MdPersonAdd } from 'react-icons/md';
+import Navigation from '../components/Navigation';
 import '../styles/Friends.css';
 
 function Friends() {
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [balances, setBalances] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchEmail, setSearchEmail] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [showAddFriend, setShowAddFriend] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
+  const [showAddFriend, setShowAddFriend] = useState(false);
 
   const auth = getAuth();
   const db = getFirestore();
@@ -40,43 +39,50 @@ function Friends() {
   useEffect(() => {
     if (!user) return;
 
-    // Listen for friends list changes
-    const unsubscribeFriends = onSnapshot(
-      query(
-        collection(db, 'friendships'),
-        where('users', 'array-contains', user.uid)
-      ),
-      (snapshot) => {
-        const friendsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setFriends(friendsData);
-        setLoading(false);
-      }
+    const q = query(
+      collection(db, 'friends'),
+      where('users', 'array-contains', user.uid)
     );
 
-    // Listen for friend requests
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const friendsData = [];
+      for (const docSnapshot of snapshot.docs) {
+        const friendId = docSnapshot.data().users.find(id => id !== user.uid);
+        const friendDocRef = doc(db, 'users', friendId);
+        const friendDocSnap = await getDoc(friendDocRef);
+        
+        // Get balance with this friend
+        const balanceDoc = await getDoc(doc(db, 'balances', `${user.uid}_${friendId}`));
+        const reverseBalanceDoc = await getDoc(doc(db, 'balances', `${friendId}_${user.uid}`));
+        
+        let balance = 0;
+        if (balanceDoc.exists()) {
+          balance = balanceDoc.data().amount;
+        } else if (reverseBalanceDoc.exists()) {
+          balance = -reverseBalanceDoc.data().amount;
+        }
+
+        if (friendDocSnap.exists()) {
+          friendsData.push({
+            id: docSnapshot.id,
+            ...friendDocSnap.data(),
+            balance: balance
+          });
+        }
+      }
+      setFriends(friendsData);
+      setLoading(false);
+    });
+
     const unsubscribeRequests = onSnapshot(
-      query(
-        collection(db, 'friendRequests'),
-        where('to', '==', user.uid)
-      ),
+      query(collection(db, 'friendRequests'), where('to', '==', user.uid)),
       (snapshot) => {
-        const requestsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setFriendRequests(requestsData);
+        setFriendRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       }
     );
 
-    // Fetch balances
     const unsubscribeBalances = onSnapshot(
-      query(
-        collection(db, 'balances'),
-        where('users', 'array-contains', user.uid)
-      ),
+      query(collection(db, 'balances'), where('users', 'array-contains', user.uid)),
       (snapshot) => {
         const balancesData = {};
         snapshot.docs.forEach(doc => {
@@ -89,173 +95,204 @@ function Friends() {
     );
 
     return () => {
-      unsubscribeFriends();
+      unsubscribe();
       unsubscribeRequests();
       unsubscribeBalances();
     };
-  }, [user, db]);
+  }, [user]);
 
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    if (query.trim().length < 3) {
-      setSearchResults([]);
-      return;
-    }
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchEmail.trim()) return;
 
     try {
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '>=', query), where('email', '<=', query + '\uf8ff'));
-      const snapshot = await getDocs(q);
-      const results = snapshot.docs
+      const q = query(usersRef, where('email', '==', searchEmail.toLowerCase()));
+      const querySnapshot = await getDocs(q);
+      
+      const results = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(user => user.id !== auth.currentUser.uid);
+        .filter(user => user.uid !== auth.currentUser.uid)
+        .filter(user => !friends.some(friend => friend.id === user.id));
+
       setSearchResults(results);
+      if (results.length === 0) {
+        setError('No user found with that email');
+      } else {
+        setError('');
+      }
     } catch (err) {
-      console.error('Search error:', err);
-      setError('Failed to search users');
+      console.error('Error searching for user:', err);
+      setError('Error searching for user');
     }
   };
 
-  const sendFriendRequest = async (toUserId) => {
+  const sendFriendRequest = async (toUser) => {
     try {
-      await addDoc(collection(db, 'friendRequests'), {
-        from: user.uid,
-        to: toUserId,
+      await addDoc(collection(db, 'notifications'), {
+        type: 'friendRequest',
+        fromUserId: user.uid,
+        fromUserEmail: user.email,
+        toUserId: toUser.id,
         status: 'pending',
-        timestamp: new Date()
+        createdAt: new Date()
       });
-      setSearchQuery('');
+
       setSearchResults([]);
+      setSearchEmail('');
+      setError('Friend request sent!');
     } catch (err) {
-      setError('Failed to send friend request');
+      console.error('Error sending friend request:', err);
+      setError('Error sending friend request');
     }
   };
 
-  const handleFriendRequest = async (requestId, accept) => {
+  const handleFriendRequest = async (request, accept) => {
     try {
-      const requestRef = doc(db, 'friendRequests', requestId);
+      const requestRef = doc(db, 'friendRequests', request.id);
       if (accept) {
-        // Create friendship
         await addDoc(collection(db, 'friendships'), {
-          users: [user.uid, requestId],
+          users: [user.uid, request.from],
+          emails: [user.email, request.fromEmail],
           timestamp: new Date()
         });
-        // Initialize balance
         await addDoc(collection(db, 'balances'), {
-          users: [user.uid, requestId],
+          users: [user.uid, request.from],
           amount: 0,
           timestamp: new Date()
         });
       }
-      // Delete request
-      await updateDoc(requestRef, { status: accept ? 'accepted' : 'rejected' });
+      await deleteDoc(requestRef);
     } catch (err) {
       setError(`Failed to ${accept ? 'accept' : 'reject'} friend request`);
     }
   };
 
+  const removeFriend = async (friendId) => {
+    try {
+      const friendshipQuery = query(
+        collection(db, 'friends'),
+        where('users', 'array-contains', user.uid)
+      );
+      
+      const querySnapshot = await getDocs(friendshipQuery);
+      const friendshipDoc = querySnapshot.docs.find(doc => 
+        doc.data().users.includes(friendId)
+      );
+
+      if (friendshipDoc) {
+        await deleteDoc(doc(db, 'friends', friendshipDoc.id));
+      }
+    } catch (err) {
+      console.error('Error removing friend:', err);
+      setError('Error removing friend');
+    }
+  };
+
   return (
-    <div className="friends">
-      <div className="friends__header">
-        <h1>Friends</h1>
-        <button 
-          className="friends__add-button"
-          onClick={() => setShowAddFriend(true)}
-        >
-          <MdPersonAdd /> Add Friend
-        </button>
-      </div>
+    <div className="layout">
+      <Navigation />
+      <main className="main-content">
+        <div className="friends">
+          <div className="friends__container">
+            <section className="friends__search-section">
+              <h2>Find Friends</h2>
+              <form className="friends__search-form" onSubmit={handleSearch}>
+                <div className="friends__search-input-container">
+                  <MdSearch className="friends__search-icon" />
+                  <input
+                    type="email"
+                    placeholder="Search by email"
+                    value={searchEmail}
+                    onChange={(e) => setSearchEmail(e.target.value)}
+                    className="friends__search-input"
+                  />
+                </div>
+                <button type="submit" className="friends__search-button">
+                  Search
+                </button>
+              </form>
 
-      {showAddFriend && (
-        <div className="friends__search">
-          <div className="friends__search-input">
-            <MdSearch />
-            <input
-              type="text"
-              placeholder="Search by email"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-          </div>
-          {searchResults.length > 0 && (
-            <div className="friends__search-results">
-              {searchResults.map(user => (
-                <div key={user.id} className="friends__search-item">
-                  <div className="friends__search-info">
-                    <span className="friends__search-email">{user.email}</span>
+              {error && <div className="friends__message">{error}</div>}
+
+              {searchResults.length > 0 && (
+                <div className="friends__search-results">
+                  {searchResults.map(result => (
+                    <div key={result.id} className="friends__search-item">
+                      <div className="friends__search-info">
+                        <div className="friends__avatar">
+                          {result.email[0].toUpperCase()}
+                        </div>
+                        <div className="friends__details">
+                          <span className="friends__email">{result.email}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => sendFriendRequest(result)}
+                        className="friends__add-button"
+                      >
+                        <MdPersonAdd />
+                        <span>Add Friend</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="friends__list-section">
+              <h2>Your Friends</h2>
+              {loading ? (
+                <div className="friends__loading">Loading...</div>
+              ) : friends.length > 0 ? (
+                <div className="friends__list">
+                  {friends.map(friend => (
+                    <div key={friend.id} className="friends__item">
+                      <div className="friends__info">
+                        <div className="friends__avatar">
+                          {friend.displayName ? friend.displayName[0].toUpperCase() : 'U'}
+                        </div>
+                        <div className="friends__details">
+                          <span className="friends__name">
+                            {friend.displayName || friend.name || 'Unnamed User'}
+                          </span>
+                          <span className="friends__email">{friend.email}</span>
+                          <span className={`friends__balance ${friend.balance > 0 ? 'positive' : friend.balance < 0 ? 'negative' : ''}`}>
+                            {friend.balance > 0 
+                              ? `Owes you RM${friend.balance.toFixed(2)}`
+                              : friend.balance < 0
+                                ? `You owe RM${Math.abs(friend.balance).toFixed(2)}`
+                                : 'No outstanding balance'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFriend(friend.id)}
+                        className="friends__remove-button"
+                        title="Remove friend"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="friends__empty">
+                  <div className="friends__empty-icon">
+                    <MdPeopleAlt />
                   </div>
-                  <button 
-                    className="friends__search-add"
-                    onClick={() => sendFriendRequest(user.id)}
-                  >
-                    <MdPersonAdd />
-                  </button>
+                  <h3>No friends yet</h3>
+                  <p className="friends__empty-subtitle">
+                    Search for friends using their email address
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {friendRequests.length > 0 && (
-        <div className="friends__requests">
-          <h2>Friend Requests</h2>
-          <div className="friends__requests-list">
-            {friendRequests.map(request => (
-              <div key={request.id} className="friends__request-item">
-                <span>{request.fromEmail}</span>
-                <div className="friends__request-actions">
-                  <button 
-                    className="friends__request-accept"
-                    onClick={() => handleFriendRequest(request.id, true)}
-                  >
-                    <MdCheck />
-                  </button>
-                  <button 
-                    className="friends__request-reject"
-                    onClick={() => handleFriendRequest(request.id, false)}
-                  >
-                    <MdClose />
-                  </button>
-                </div>
-              </div>
-            ))}
+              )}
+            </section>
           </div>
         </div>
-      )}
-
-      <div className="friends__list">
-        {friends.map(friend => {
-          const balance = balances[friend.id] || 0;
-          return (
-            <div key={friend.id} className="friends__item">
-              <div className="friends__item-info">
-                <h3>{friend.email}</h3>
-                <div className={`friends__item-balance ${balance > 0 ? 'positive' : balance < 0 ? 'negative' : ''}`}>
-                  {balance > 0 ? (
-                    <>
-                      <MdArrowUpward />
-                      <span>They owe you RM {Math.abs(balance)}</span>
-                    </>
-                  ) : balance < 0 ? (
-                    <>
-                      <MdArrowDownward />
-                      <span>You owe RM {Math.abs(balance)}</span>
-                    </>
-                  ) : (
-                    <span>All settled up!</span>
-                  )}
-                </div>
-              </div>
-              <button className="friends__item-settle">Settle Up</button>
-            </div>
-          );
-        })}
-      </div>
-
-      {error && <div className="friends__error">{error}</div>}
+      </main>
     </div>
   );
 }
 
-export default Friends; 
+export default Friends;

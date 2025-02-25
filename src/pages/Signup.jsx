@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import signupImage from "../assets/signup.png";
 import "../styles/SignUp.css";
 
@@ -13,9 +14,19 @@ function SignUp() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const auth = getAuth();
+    const db = getFirestore();
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Save user data to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        fullName: fullName,
+        email: email,
+        createdAt: serverTimestamp(),
+      });
+
       alert("Account created successfully!");
       navigate("/login");
     } catch (error) {

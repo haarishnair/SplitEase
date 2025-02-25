@@ -1,215 +1,211 @@
-import React, { useState, useEffect } from "react";
-import { getAuth } from "firebase/auth";
-import { 
-  collection, 
-  query, 
-  where, 
-  onSnapshot,
-  getFirestore,
-  orderBy,
-  limit
-} from "firebase/firestore";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { db, auth } from '../firebase';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { 
   MdDashboard, 
   MdGroups, 
-  MdAttachMoney, 
-  MdCalendarToday,
-  MdAdd,
-  MdHome,
-  MdFlight,
-  MdRestaurant,
-  MdLocalGroceryStore
-} from "react-icons/md";
-import "../styles/Dashboard.css";
-import { useNavigate } from "react-router-dom";
+  MdPeopleAlt, 
+  MdLogout, 
+  MdTrendingUp, 
+  MdTrendingDown, 
+  MdHistory,
+  MdAccountBalance
+} from 'react-icons/md';
+import '../styles/Dashboard.css';
+import Navigation from '../components/Navigation';
 
 function Dashboard() {
-  const auth = getAuth();
-  const db = getFirestore();
-  const user = auth.currentUser;
-  const navigate = useNavigate();
-
-  const [activities, setActivities] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [groups, setGroups] = useState([]);
-  const [financialSummary, setFinancialSummary] = useState({
-    totalBalance: 0,
-    youAreOwed: { amount: 0, people: 0 },
-    youOwe: { amount: 0, people: 0 }
-  });
-  const [loading, setLoading] = useState(true);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [totalOwed, setTotalOwed] = useState(0);
+  const [totalIOwe, setTotalIOwe] = useState(0);
+  const navigate = useNavigate();
+  const user = auth.currentUser;
 
   useEffect(() => {
-    if (!user) return;
+    const fetchData = async () => {
+      if (!user) return;
 
-    // Set up real-time listeners
-    const unsubscribers = [];
-
-    // Listen to activities
-    const activitiesQuery = query(
-      collection(db, "activities"),
-      where("userId", "==", user.uid),
-      orderBy("timestamp", "desc"),
-      limit(10)
-    );
-
-    const activitiesUnsubscribe = onSnapshot(activitiesQuery, (snapshot) => {
-      const activitiesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setActivities(activitiesData);
-    });
-    unsubscribers.push(activitiesUnsubscribe);
-
-    // Listen to groups
-    const groupsQuery = query(
-      collection(db, "groups"),
-      where("members", "array-contains", user.uid)
-    );
-
-    const groupsUnsubscribe = onSnapshot(groupsQuery, (snapshot) => {
-      const groupsData = snapshot.docs.map(doc => ({
+      // Fetch groups
+      const groupsQuery = query(
+        collection(db, 'groups'),
+        where('members', 'array-contains', user.uid)
+      );
+      const groupsSnapshot = await getDocs(groupsQuery);
+      const groupsData = groupsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
       setGroups(groupsData);
-    });
-    unsubscribers.push(groupsUnsubscribe);
 
-    // Listen to financial summary
-    const summaryQuery = query(
-      collection(db, "financialSummary"),
-      where("userId", "==", user.uid)
-    );
+      // Fetch balances
+      const balancesQuery = query(
+        collection(db, 'balances'),
+        where('userId', '==', user.uid)
+      );
+      const balancesSnapshot = await getDocs(balancesQuery);
+      
+      let owed = 0;
+      let iOwe = 0;
+      
+      balancesSnapshot.docs.forEach(doc => {
+        const amount = doc.data().amount;
+        if (amount > 0) {
+          owed += amount;
+        } else {
+          iOwe += Math.abs(amount);
+        }
+      });
 
-    const summaryUnsubscribe = onSnapshot(summaryQuery, (snapshot) => {
-      if (!snapshot.empty) {
-        setFinancialSummary(snapshot.docs[0].data());
-      }
-    });
-    unsubscribers.push(summaryUnsubscribe);
+      setTotalOwed(owed);
+      setTotalIOwe(iOwe);
+      setTotalBalance(owed - iOwe);
 
-    setLoading(false);
-
-    // Cleanup function
-    return () => {
-      unsubscribers.forEach(unsubscribe => unsubscribe());
+      // Modified recent activity query
+      const activityQuery = query(
+        collection(db, 'transactions'),
+        where('participants', 'array-contains', user.uid),
+      );
+      const activitySnapshot = await getDocs(activityQuery);
+      const activityData = await Promise.all(activitySnapshot.docs.map(async doc => {
+        const data = doc.data();
+        // Get group name
+        const groupDoc = await getDocs(doc(db, 'groups', data.groupId));
+        const groupName = groupDoc.exists() ? groupDoc.data().name : 'Unknown Group';
+        return {
+          id: doc.id,
+          ...data,
+          groupName
+        };
+      }));
+      
+      // Sort and limit the results in memory instead
+      const sortedActivity = activityData
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 5);
+      
+      setRecentActivity(sortedActivity);
     };
-  }, [user, db]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-MY', {
-      style: 'currency',
-      currency: 'MYR'
-    }).format(amount);
+    fetchData();
+  }, [user]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate();
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
-  };
-
-  const handleGroupClick = (groupId) => {
-    navigate(`/groups/${groupId}`);
-  };
-
-  if (loading) {
-    return <div className="dashboard__loading">Loading...</div>;
-  }
 
   return (
-    <div className="dashboard__content">
-      <header className="dashboard__header">
-        <h1 className="dashboard__title">Dashboard</h1>
-        <button className="dashboard__add-button">
-          <MdAdd className="dashboard__button-icon" /> Add Expense
-        </button>
-      </header>
-
-      <div className="dashboard__cards">
-        <div className="dashboard__card">
-          <h3 className="dashboard__card-title">Total Balance</h3>
-          <p className="dashboard__card-amount">
-            {formatCurrency(financialSummary.totalBalance)}
-          </p>
-          <p className="dashboard__card-trend dashboard__card-trend--positive">
-            {financialSummary.trend || '+0%'}
-          </p>
+    <div className="layout">
+      <Navigation />
+      <main className="main-content">
+        <div className="main-content__header">
+          <h1>Dashboard</h1>
         </div>
 
-        <div className="dashboard__card">
-          <h3 className="dashboard__card-title">You're Owed</h3>
-          <p className="dashboard__card-amount dashboard__card-amount--positive">
-            {formatCurrency(financialSummary.youAreOwed.amount)}
-          </p>
-          <p className="dashboard__card-subtitle">
-            From {financialSummary.youAreOwed.people} people
-          </p>
-        </div>
-
-        <div className="dashboard__card">
-          <h3 className="dashboard__card-title">You Owe</h3>
-          <p className="dashboard__card-amount dashboard__card-amount--negative">
-            {formatCurrency(financialSummary.youOwe.amount)}
-          </p>
-          <p className="dashboard__card-subtitle">
-            To {financialSummary.youOwe.people} people
-          </p>
-        </div>
-      </div>
-
-      <div className="dashboard__recent">
-        <h2 className="dashboard__section-title">Recent Activity</h2>
-        <div className="dashboard__activity-list">
-          {activities.map((activity) => (
-            <div key={activity.id} className="dashboard__activity-item">
-              <div className="dashboard__activity-icon">
-                <MdAttachMoney />
-              </div>
-              <div className="dashboard__activity-details">
-                <h4>{activity.title}</h4>
-                <p>
-                  {activity.isPaid 
-                    ? `You paid ${formatCurrency(activity.amount)}` 
-                    : `You owe ${formatCurrency(activity.amount)}`}
-                </p>
-              </div>
-              <p className="dashboard__activity-date">
-                {formatDate(activity.timestamp)}
+        <div className="dashboard-cards">
+          <div className="dashboard-card balance gradient-1">
+            <div className="dashboard-card__icon">
+              <MdAccountBalance />
+            </div>
+            <div className="dashboard-card__content">
+              <h3>Total Balance</h3>
+              <p className={`dashboard-card__number ${totalBalance >= 0 ? 'positive' : 'negative'}`}>
+                RM {Math.abs(totalBalance).toFixed(2)}
               </p>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      <div className="dashboard__groups">
-        <h2 className="dashboard__section-title">Your Groups</h2>
-        <div className="dashboard__group-list">
-          {groups.map((group) => (
-            <div 
-              key={group.id} 
-              className="dashboard__group-item"
-              onClick={() => handleGroupClick(group.id)}
-            >
-              <div className="dashboard__group-icon">
-                <MdGroups />
-              </div>
-              <div className="dashboard__group-details">
-                <h4>{group.name}</h4>
-                <p>{group.members.length} members</p>
-              </div>
+          <div className="dashboard-card owed gradient-2">
+            <div className="dashboard-card__icon">
+              <MdTrendingUp />
             </div>
-          ))}
+            <div className="dashboard-card__content">
+              <h3>Total Owed to You</h3>
+              <p className="dashboard-card__number positive">
+                RM {totalOwed.toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          <div className="dashboard-card owe gradient-3">
+            <div className="dashboard-card__icon">
+              <MdTrendingDown />
+            </div>
+            <div className="dashboard-card__content">
+              <h3>Total You Owe</h3>
+              <p className="dashboard-card__number negative">
+                RM {totalIOwe.toFixed(2)}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <div className="dashboard-grid">
+          <div className="activity-list">
+            <h2>
+              <MdHistory />
+              Recent Activity
+            </h2>
+            {recentActivity.length > 0 ? (
+              <div className="activity-items">
+                {recentActivity.map(activity => (
+                  <div key={activity.id} className="activity-item">
+                    <div className="activity-item__icon">
+                      <MdAccountBalance />
+                    </div>
+                    <div className="activity-item__content">
+                      <h3>{activity.description}</h3>
+                      <p>
+                        {activity.groupName} • {new Date(activity.timestamp?.toDate()).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="activity-item__amount">
+                      <span className={activity.amount >= 0 ? 'positive' : 'negative'}>
+                        RM {Math.abs(activity.amount).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="activity-empty">No recent activity</p>
+            )}
+          </div>
+
+          <div className="groups-list">
+            <h2>Your Groups</h2>
+            {groups.length > 0 ? (
+              <div className="groups-grid">
+                {groups.map(group => (
+                  <Link to={`/groups/${group.id}`} key={group.id} className="group-card">
+                    <div className="group-card__icon">
+                      <MdGroups />
+                    </div>
+                    <div className="group-card__content">
+                      <h3>{group.name}</h3>
+                      <p>{Object.keys(group.memberEmails || {}).length} members</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="groups-empty">
+                <MdGroups className="groups-empty__icon" />
+                <p>No groups yet</p>
+                <p className="groups-empty__subtitle">Create a group to get started</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

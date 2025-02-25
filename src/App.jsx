@@ -1,95 +1,73 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
-import Groups from "./pages/Groups";
-import Expenses from "./pages/Expenses";
-import Analytics from "./pages/Analytics";
-import PrivateRoute from "./components/PrivateRoute";
-import Navigation from "./components/Navigation";
-import GroupDetail from "./pages/GroupDetail";
-import DashboardLayout from './components/DashboardLayout';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { auth } from './firebase';
+import Navbar from './components/TopBar';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Groups from './pages/Groups';
+import GroupDetail from './pages/GroupDetail';
 import Friends from './pages/Friends';
-import FriendDetail from './pages/FriendDetail';
-import ProtectedRoute from './components/ProtectedRoute';
-import Notifications from './pages/Notifications';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+function AppContent() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
-function App() {
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  const shouldShowNavbar = (pathname) => {
+    const noNavbarRoutes = ['/', '/login', '/signup'];
+    return !noNavbarRoutes.includes(pathname);
+  };
+
   return (
-    <BrowserRouter>
-      <Navigation />
+    <div className="app">
+      {shouldShowNavbar(location.pathname) && <Navbar />}
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        
-        {/* Protected routes with DashboardLayout */}
         <Route
           path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Dashboard />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
+          element={user ? <Dashboard /> : <Navigate to="/login" />}
         />
         <Route
           path="/groups"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Groups />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
+          element={user ? <Groups /> : <Navigate to="/login" />}
         />
         <Route
           path="/groups/:groupId"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <GroupDetail />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
+          element={user ? <GroupDetail /> : <Navigate to="/login" />}
         />
         <Route
           path="/friends"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Friends />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
+          element={user ? <Friends /> : <Navigate to="/login" />}
         />
-        <Route
-          path="/friends/:friendId"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <FriendDetail />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Notifications />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        {/* Add other protected routes similarly */}
-        
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </BrowserRouter>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

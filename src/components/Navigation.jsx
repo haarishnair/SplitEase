@@ -1,37 +1,68 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import icon from "../assets/icon.png";
-import Notifications from './Notifications';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { MdDashboard, MdGroups, MdPeopleAlt, MdPerson, MdLogout } from 'react-icons/md';
+import { getAuth, signOut } from 'firebase/auth';
 import '../styles/Navigation.css';
-import { MdAccountBalance } from 'react-icons/md';
 
 function Navigation() {
+  const location = useLocation();
   const navigate = useNavigate();
+  const auth = getAuth();
 
-  const handleNotificationClick = () => {
-    navigate('/notifications');
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
+  const navItems = [
+    {
+      path: '/dashboard',
+      icon: <MdDashboard className="nav-icon" />,
+      label: 'Dashboard'
+    },
+    {
+      path: '/groups',
+      icon: <MdGroups className="nav-icon" />,
+      label: 'Groups'
+    },
+    {
+      path: '/friends',
+      icon: <MdPeopleAlt className="nav-icon" />,
+      label: 'Friends'
+    },
+    {
+      path: '/profile',
+      icon: <MdPerson className="nav-icon" />,
+      label: 'Profile'
+    }
+  ];
+
   return (
-    <nav className="navigation">
-      <Link to="/dashboard" className="navigation__brand">
-        <img 
-          src={icon} 
-          alt="SplitEase icon" 
-          className="navigation__icon"
-        />
-        <span className="navigation__title">SplitSmart</span>
-      </Link>
-      
-      <div className="navigation__actions">
-        <button 
-          className="navigation__notification-btn"
-          onClick={handleNotificationClick}
-        >
-          <Notifications />
-        </button>
+    <aside className="sidebar">
+      <div className="sidebar__content">
+        <h2>Navigation</h2>
+        <nav className="sidebar__nav">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`sidebar__nav-item ${location.pathname === item.path ? 'active' : ''}`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
       </div>
-    </nav>
+      <button className="navigation__signout" onClick={handleSignOut}>
+        <MdLogout />
+        <span>Sign Out</span>
+      </button>
+    </aside>
   );
 }
 
